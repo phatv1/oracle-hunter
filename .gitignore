@@ -1,0 +1,13 @@
+oracle-vps.env
+oracle-vps.log
+oracle-vps.pid
+.venv/
+.serena/
+.DS_Store
+__pycache__/
+*.pyc
+.env
+.env.*
+*.pem
+*.key
+fadehost-secrets.env
