@@ -23,6 +23,20 @@ def fixture_env():
 
 
 class WorkerTests(unittest.TestCase):
+    def test_split_secrets_reconstruct_and_remove_all_parts(self):
+        env = fixture_env()
+        original = env.pop("OCI_PRIVATE_KEY_B64")
+        env["OCI_PRIVATE_KEY_B64_1"] = original[:20]
+        env["OCI_PRIVATE_KEY_B64_2"] = original[20:]
+        with tempfile.TemporaryDirectory() as folder:
+            runtime = main.prepare_environment(Path(folder), env)
+            self.assertEqual((Path(folder) / "api-key.pem").read_bytes(),
+                             base64.b64decode(original))
+            self.assertFalse(any(key.startswith("OCI_PRIVATE_KEY_B64") for key in runtime))
+            del env["OCI_PRIVATE_KEY_B64_1"]
+            with self.assertRaises(ValueError):
+                main.prepare_environment(Path(folder), env)
+
     def test_telegram_failure_does_not_abort_successful_hunter(self):
         script = "\n".join([
             "set -Eeuo pipefail", "source lib/util.sh", "source lib/notify.sh",

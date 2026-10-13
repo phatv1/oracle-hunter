@@ -40,6 +40,12 @@ Base64 là cách truyền file qua biến môi trường, không phải mã hóa
 Chỉ nhập các giá trị vào Environment variables của FadeHost, không commit
 private key hay file `oracle-vps.env` vào GitHub.
 
+FadeHost giới hạn mỗi giá trị env ở 2.000 ký tự. Nếu base64 dài hơn,
+chia thành các đoạn tối đa 1.900 ký tự, nhập vào `OCI_PRIVATE_KEY_B64_1`,
+`OCI_PRIVATE_KEY_B64_2`, ... theo thứ tự và bỏ biến `OCI_PRIVATE_KEY_B64`.
+Worker tự ghép các đoạn (tối đa 16 đoạn). SSH public key cũng hỗ trợ cách này
+với `SSH_PUBLIC_KEY_B64_1`, `SSH_PUBLIC_KEY_B64_2`, ... nếu cần.
+
 Trên macOS, copy trực tiếp base64 vào clipboard, thay đường dẫn cho đúng:
 
 ```bash

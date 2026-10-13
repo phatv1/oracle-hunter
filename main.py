@@ -22,8 +22,20 @@ def required(env, name):
 
 
 def decoded_secret(env, name):
+    value = env.get(name, "").strip()
+    if not value:
+        parts = {}
+        for key, part in env.items():
+            suffix = key.removeprefix(name + "_")
+            if key.startswith(name + "_") and suffix.isdigit():
+                parts[int(suffix)] = part.strip()
+        if not parts:
+            raise ValueError(f"Missing environment variable: {name} (or {name}_1, {name}_2, ...)")
+        if len(parts) > 16 or sorted(parts) != list(range(1, len(parts) + 1)):
+            raise ValueError(f"{name} chunks must be consecutive from _1, with at most 16 parts")
+        value = "".join(parts[index] for index in range(1, len(parts) + 1))
     try:
-        return base64.b64decode(required(env, name), validate=True).decode("utf-8")
+        return base64.b64decode(value, validate=True).decode("utf-8")
     except (ValueError, UnicodeError) as exc:
         raise ValueError(f"{name} must be valid single-line base64 UTF-8") from exc
 
@@ -73,8 +85,9 @@ def prepare_environment(directory, env):
         "PYTHONUNBUFFERED": "1",
     })
     # The CLI needs only the generated files, not the base64 originals.
-    for name in ("OCI_PRIVATE_KEY_B64", "SSH_PUBLIC_KEY_B64", "OCI_KEY_PASSPHRASE"):
-        env.pop(name, None)
+    for name in list(env):
+        if name in ("OCI_PRIVATE_KEY_B64", "SSH_PUBLIC_KEY_B64", "OCI_KEY_PASSPHRASE") or name.startswith(("OCI_PRIVATE_KEY_B64_", "SSH_PUBLIC_KEY_B64_")):
+            env.pop(name, None)
     return env
 
 
